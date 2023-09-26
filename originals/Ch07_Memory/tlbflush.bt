@@ -1,0 +1,87 @@
+#!/usr/bin/env bpftrace
+/*
+ * tlbflush	Trace TLB flush.
+ *		For Linux, uses bpftrace and eBPF.
+ *
+ * USAGE: tlbflush.bt
+ */
+
+#include <linux/mm_types.h>
+
+BEGIN
+{
+	printf("Tracing TLB flush... Hit Ctrl-C to end.\n");
+}
+
+tracepoint:tlb:tlb_flush
+{
+	$pages = (int64)args->pages;
+
+	if ($pages == -1) {
+		@flush_all[args->reason]++;
+	} else {
+		@flush[args->reason] += args->pages;
+	}
+}
+
+END
+{
+	printf("\nTLB flush pages\n");
+	printf("reason               pages\n");
+
+	if (@flush[TLB_FLUSH_ON_TASK_SWITCH]) {
+		printf("flush on task switch %lu\n",
+		       @flush[TLB_FLUSH_ON_TASK_SWITCH]);
+	}
+
+	if (@flush[TLB_REMOTE_SHOOTDOWN]) {
+		printf("remote shootdown     %lu\n",
+		       @flush[TLB_REMOTE_SHOOTDOWN]);
+	}
+
+	if (@flush[TLB_LOCAL_SHOOTDOWN]) {
+		printf("local shootdown      %lu\n",
+		       @flush[TLB_LOCAL_SHOOTDOWN]);
+	}
+
+	if (@flush[TLB_LOCAL_MM_SHOOTDOWN]) {
+		printf("local mm shootdown   %lu\n",
+		       @flush[TLB_LOCAL_MM_SHOOTDOWN]);
+	}
+
+	if (@flush[TLB_REMOTE_SEND_IPI]) {
+		printf("remote ipi send      %lu\n",
+		       @flush[TLB_REMOTE_SEND_IPI]);
+	}
+
+	printf("\nTLB flush all events\n");
+	printf("reason               events\n");
+
+	if (@flush_all[TLB_FLUSH_ON_TASK_SWITCH]) {
+		printf("flush on task switch %lu\n",
+		       @flush_all[TLB_FLUSH_ON_TASK_SWITCH]);
+	}
+
+	if (@flush_all[TLB_REMOTE_SHOOTDOWN]) {
+		printf("remote shootdown     %lu\n",
+		       @flush_all[TLB_REMOTE_SHOOTDOWN]);
+	}
+
+	if (@flush_all[TLB_LOCAL_SHOOTDOWN]) {
+		printf("local shootdown      %lu\n",
+		       @flush_all[TLB_LOCAL_SHOOTDOWN]);
+	}
+
+	if (@flush_all[TLB_LOCAL_MM_SHOOTDOWN]) {
+		printf("local mm shootdown   %lu\n",
+		       @flush_all[TLB_LOCAL_MM_SHOOTDOWN]);
+	}
+
+	if (@flush_all[TLB_REMOTE_SEND_IPI]) {
+		printf("remote ipi send      %lu\n",
+		       @flush_all[TLB_REMOTE_SEND_IPI]);
+	}
+
+	clear(@flush);
+	clear(@flush_all);
+}
