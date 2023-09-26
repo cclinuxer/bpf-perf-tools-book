@@ -1,4 +1,4 @@
-#!/usr/bin/env bpftrace
+#!/usr/local/bin/bpftrace
 /*
  * tlbflush	Trace TLB flush.
  *		For Linux, uses bpftrace and eBPF.
